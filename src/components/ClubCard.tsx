@@ -1,4 +1,5 @@
 import { Users, UserCircle } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import { Button } from "./ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "./ui/card";
 import { Badge } from "./ui/badge";
@@ -6,10 +7,11 @@ import { Club } from "@/data/clubsData";
 
 interface ClubCardProps {
   club: Club;
-  onJoin?: (clubId: number) => void;
 }
 
-const ClubCard = ({ club, onJoin }: ClubCardProps) => {
+const ClubCard = ({ club }: ClubCardProps) => {
+  const navigate = useNavigate();
+
   return (
     <Card className="overflow-hidden group hover:shadow-lg transition-all duration-300">
       <div className="relative overflow-hidden h-48">
@@ -41,7 +43,7 @@ const ClubCard = ({ club, onJoin }: ClubCardProps) => {
       
       <CardFooter>
         <Button 
-          onClick={() => onJoin?.(club.id)}
+          onClick={() => navigate(`/clubs/${club.id}/join`)}
           className="w-full"
         >
           Join Club
