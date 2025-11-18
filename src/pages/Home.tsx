@@ -5,30 +5,12 @@ import Footer from "@/components/Footer";
 import ClubCard from "@/components/ClubCard";
 import EventCard from "@/components/EventCard";
 import { Button } from "@/components/ui/button";
-import { clubs } from "@/data/clubsData";
-import { events } from "@/data/eventsData";
-import { useToast } from "@/hooks/use-toast";
+import { useAppContext } from "@/context/AppContext";
 
 const Home = () => {
-  const { toast } = useToast();
+  const { clubs, events } = useAppContext();
   const featuredClubs = clubs.filter(club => club.featured).slice(0, 3);
   const upcomingEvents = events.slice(0, 3);
-
-  const handleJoinClub = (clubId: number) => {
-    const club = clubs.find(c => c.id === clubId);
-    toast({
-      title: "Join Request Sent!",
-      description: `Your request to join ${club?.name} has been submitted.`,
-    });
-  };
-
-  const handleRegisterEvent = (eventId: number) => {
-    const event = events.find(e => e.id === eventId);
-    toast({
-      title: "Registration Successful!",
-      description: `You've registered for ${event?.title}.`,
-    });
-  };
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -112,7 +94,7 @@ const Home = () => {
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {featuredClubs.map((club) => (
-              <ClubCard key={club.id} club={club} onJoin={handleJoinClub} />
+              <ClubCard key={club.id} club={club} />
             ))}
           </div>
         </div>
@@ -135,7 +117,7 @@ const Home = () => {
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {upcomingEvents.map((event) => (
-              <EventCard key={event.id} event={event} onRegister={handleRegisterEvent} />
+              <EventCard key={event.id} event={event} />
             ))}
           </div>
         </div>

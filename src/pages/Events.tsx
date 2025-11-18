@@ -4,12 +4,11 @@ import Footer from "@/components/Footer";
 import EventCard from "@/components/EventCard";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { events } from "@/data/eventsData";
-import { useToast } from "@/hooks/use-toast";
+import { useAppContext } from "@/context/AppContext";
 import { Search, Filter } from "lucide-react";
 
 const Events = () => {
-  const { toast } = useToast();
+  const { events } = useAppContext();
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string>("All");
   const [showOnlyOpen, setShowOnlyOpen] = useState(false);
@@ -24,14 +23,6 @@ const Events = () => {
     const matchesOpen = !showOnlyOpen || event.registrationOpen;
     return matchesSearch && matchesCategory && matchesOpen;
   });
-
-  const handleRegisterEvent = (eventId: number) => {
-    const event = events.find(e => e.id === eventId);
-    toast({
-      title: "Registration Successful!",
-      description: `You've registered for ${event?.title}.`,
-    });
-  };
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -97,7 +88,7 @@ const Events = () => {
               </p>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {filteredEvents.map((event) => (
-                  <EventCard key={event.id} event={event} onRegister={handleRegisterEvent} />
+                  <EventCard key={event.id} event={event} />
                 ))}
               </div>
             </>

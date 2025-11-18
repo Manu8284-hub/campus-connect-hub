@@ -4,12 +4,11 @@ import Footer from "@/components/Footer";
 import ClubCard from "@/components/ClubCard";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { clubs } from "@/data/clubsData";
-import { useToast } from "@/hooks/use-toast";
+import { useAppContext } from "@/context/AppContext";
 import { Search } from "lucide-react";
 
 const Clubs = () => {
-  const { toast } = useToast();
+  const { clubs } = useAppContext();
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string>("All");
 
@@ -21,14 +20,6 @@ const Clubs = () => {
     const matchesCategory = selectedCategory === "All" || club.category === selectedCategory;
     return matchesSearch && matchesCategory;
   });
-
-  const handleJoinClub = (clubId: number) => {
-    const club = clubs.find(c => c.id === clubId);
-    toast({
-      title: "Join Request Sent!",
-      description: `Your request to join ${club?.name} has been submitted.`,
-    });
-  };
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -84,7 +75,7 @@ const Clubs = () => {
               </p>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {filteredClubs.map((club) => (
-                  <ClubCard key={club.id} club={club} onJoin={handleJoinClub} />
+                  <ClubCard key={club.id} club={club} />
                 ))}
               </div>
             </>

@@ -1,4 +1,5 @@
 import { Calendar, Clock, MapPin, Users } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import { Button } from "./ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "./ui/card";
 import { Badge } from "./ui/badge";
@@ -7,10 +8,10 @@ import { Event } from "@/data/eventsData";
 
 interface EventCardProps {
   event: Event;
-  onRegister?: (eventId: number) => void;
 }
 
-const EventCard = ({ event, onRegister }: EventCardProps) => {
+const EventCard = ({ event }: EventCardProps) => {
+  const navigate = useNavigate();
   const registrationProgress = (event.currentParticipants / event.maxParticipants) * 100;
   const spotsLeft = event.maxParticipants - event.currentParticipants;
 
@@ -76,7 +77,7 @@ const EventCard = ({ event, onRegister }: EventCardProps) => {
       <CardFooter>
         {event.registrationOpen ? (
           <Button 
-            onClick={() => onRegister?.(event.id)}
+            onClick={() => navigate(`/events/${event.id}/register`)}
             className="w-full"
             disabled={spotsLeft === 0}
           >
