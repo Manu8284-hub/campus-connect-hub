@@ -19,7 +19,7 @@ const Home = () => {
       {/* Hero Section */}
       <section className="relative bg-gradient-to-br from-primary to-primary/80 text-primary-foreground py-20 md:py-32">
         <div className="container mx-auto px-4">
-          <div className="max-w-3xl">
+          <div className="max-w-3xl relative z-10">
             <h1 className="text-4xl md:text-6xl font-bold mb-6 animate-in slide-in-from-bottom-4 duration-700">
               Discover Your Passion Through Clubs
             </h1>
@@ -44,8 +44,8 @@ const Home = () => {
         </div>
         
         {/* Decorative Elements */}
-        <div className="absolute top-10 right-10 w-72 h-72 bg-primary-foreground/10 rounded-full blur-3xl"></div>
-        <div className="absolute bottom-10 left-10 w-96 h-96 bg-primary-foreground/5 rounded-full blur-3xl"></div>
+        <div className="absolute top-10 right-10 w-72 h-72 bg-primary-foreground/10 rounded-full blur-3xl pointer-events-none"></div>
+        <div className="absolute bottom-10 left-10 w-96 h-96 bg-primary-foreground/5 rounded-full blur-3xl pointer-events-none"></div>
       </section>
 
       {/* Stats Section */}

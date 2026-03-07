@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { FormEvent, useState } from "react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -10,12 +10,16 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useAppContext } from "@/context/AppContext";
 import { useToast } from "@/hooks/use-toast";
+import { Club } from "@/data/clubsData";
+import { Event } from "@/data/eventsData";
 import { Users, Calendar, TrendingUp, Plus, Settings } from "lucide-react";
 
 const AdminDashboard = () => {
-  const { clubs, events, addClub, addEvent } = useAppContext();
+  const { clubs, events, addClub, updateClub, deleteClub, addEvent, updateEvent, deleteEvent } = useAppContext();
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState("overview");
+  const [editingClubId, setEditingClubId] = useState<number | null>(null);
+  const [editingEventId, setEditingEventId] = useState<number | null>(null);
 
   const [clubForm, setClubForm] = useState({
     name: "",
@@ -40,21 +44,7 @@ const AdminDashboard = () => {
   const totalMembers = clubs.reduce((sum, club) => sum + club.members, 0);
   const openEvents = events.filter(e => e.registrationOpen).length;
 
-  const handleCreateClub = (e: React.FormEvent) => {
-    e.preventDefault();
-    addClub({
-      id: 0,
-      name: clubForm.name,
-      description: clubForm.description,
-      category: clubForm.category,
-      members: 0,
-      coordinator: clubForm.coordinator,
-      image: clubForm.image || "https://images.unsplash.com/photo-1523240795612-9a054b0db644?w=400&h=300&fit=crop",
-    });
-    toast({
-      title: "Club Created!",
-      description: `${clubForm.name} has been successfully created.`,
-    });
+  const resetClubForm = () => {
     setClubForm({
       name: "",
       description: "",
@@ -62,28 +52,10 @@ const AdminDashboard = () => {
       coordinator: "",
       image: "",
     });
+    setEditingClubId(null);
   };
 
-  const handleCreateEvent = (e: React.FormEvent) => {
-    e.preventDefault();
-    addEvent({
-      id: 0,
-      title: eventForm.title,
-      description: eventForm.description,
-      club: eventForm.club,
-      category: eventForm.category,
-      date: eventForm.date,
-      time: eventForm.time,
-      venue: eventForm.venue,
-      registrationOpen: true,
-      currentParticipants: 0,
-      maxParticipants: Number(eventForm.maxParticipants),
-      image: eventForm.image || "https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=400&h=300&fit=crop",
-    });
-    toast({
-      title: "Event Created!",
-      description: `${eventForm.title} has been successfully created.`,
-    });
+  const resetEventForm = () => {
     setEventForm({
       title: "",
       description: "",
@@ -94,6 +66,210 @@ const AdminDashboard = () => {
       venue: "",
       maxParticipants: "",
       image: "",
+    });
+    setEditingEventId(null);
+  };
+
+  const handleCreateClub = (e: FormEvent) => {
+    e.preventDefault();
+
+    if (!clubForm.name.trim() || !clubForm.description.trim() || !clubForm.category || !clubForm.coordinator.trim()) {
+      toast({
+        title: "Missing required fields",
+        description: "Please fill in all required club details before creating the club.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const sanitizedClub = {
+      name: clubForm.name.trim(),
+      description: clubForm.description.trim(),
+      category: clubForm.category,
+      coordinator: clubForm.coordinator.trim(),
+      image: clubForm.image.trim() || "https://images.unsplash.com/photo-1523240795612-9a054b0db644?w=400&h=300&fit=crop",
+    };
+
+    if (editingClubId !== null) {
+      const existingClub = clubs.find(club => club.id === editingClubId);
+      if (!existingClub) {
+        toast({
+          title: "Club not found",
+          description: "Unable to update this club. Please try again.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      updateClub({
+        ...existingClub,
+        ...sanitizedClub,
+      });
+
+      toast({
+        title: "Club Updated!",
+        description: `${sanitizedClub.name} has been successfully updated.`,
+      });
+      resetClubForm();
+      return;
+    }
+
+    addClub({
+      id: 0,
+      name: sanitizedClub.name,
+      description: sanitizedClub.description,
+      category: sanitizedClub.category,
+      members: 0,
+      coordinator: sanitizedClub.coordinator,
+      image: sanitizedClub.image,
+    });
+    toast({
+      title: "Club Created!",
+      description: `${sanitizedClub.name} has been successfully created.`,
+    });
+    resetClubForm();
+  };
+
+  const handleEditClub = (club: Club) => {
+    setEditingClubId(club.id);
+    setClubForm({
+      name: club.name,
+      description: club.description,
+      category: club.category,
+      coordinator: club.coordinator,
+      image: club.image,
+    });
+  };
+
+  const handleDeleteClub = (club: Club) => {
+    const isConfirmed = window.confirm(`Are you sure you want to delete ${club.name}?`);
+    if (!isConfirmed) {
+      return;
+    }
+
+    deleteClub(club.id);
+
+    if (editingClubId === club.id) {
+      resetClubForm();
+    }
+
+    toast({
+      title: "Club Deleted",
+      description: `${club.name} has been removed.`,
+    });
+  };
+
+  const handleCreateEvent = (e: FormEvent) => {
+    e.preventDefault();
+
+    const maxParticipants = Number(eventForm.maxParticipants);
+
+    if (
+      !eventForm.title.trim() ||
+      !eventForm.description.trim() ||
+      !eventForm.club ||
+      !eventForm.category ||
+      !eventForm.date ||
+      !eventForm.time.trim() ||
+      !eventForm.venue.trim() ||
+      !Number.isInteger(maxParticipants) ||
+      maxParticipants < 1
+    ) {
+      toast({
+        title: "Missing or invalid fields",
+        description: "Please complete all required event details with a valid max participants value.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const sanitizedEvent = {
+      title: eventForm.title.trim(),
+      description: eventForm.description.trim(),
+      club: eventForm.club,
+      category: eventForm.category,
+      date: eventForm.date,
+      time: eventForm.time.trim(),
+      venue: eventForm.venue.trim(),
+      maxParticipants,
+      image: eventForm.image.trim() || "https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=400&h=300&fit=crop",
+    };
+
+    if (editingEventId !== null) {
+      const existingEvent = events.find(event => event.id === editingEventId);
+      if (!existingEvent) {
+        toast({
+          title: "Event not found",
+          description: "Unable to update this event. Please try again.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      updateEvent({
+        ...existingEvent,
+        ...sanitizedEvent,
+      });
+
+      toast({
+        title: "Event Updated!",
+        description: `${sanitizedEvent.title} has been successfully updated.`,
+      });
+      resetEventForm();
+      return;
+    }
+
+    addEvent({
+      id: 0,
+      title: sanitizedEvent.title,
+      description: sanitizedEvent.description,
+      club: sanitizedEvent.club,
+      category: sanitizedEvent.category,
+      date: sanitizedEvent.date,
+      time: sanitizedEvent.time,
+      venue: sanitizedEvent.venue,
+      registrationOpen: true,
+      currentParticipants: 0,
+      maxParticipants: sanitizedEvent.maxParticipants,
+      image: sanitizedEvent.image,
+    });
+    toast({
+      title: "Event Created!",
+      description: `${sanitizedEvent.title} has been successfully created.`,
+    });
+    resetEventForm();
+  };
+
+  const handleEditEvent = (event: Event) => {
+    setEditingEventId(event.id);
+    setEventForm({
+      title: event.title,
+      description: event.description,
+      club: event.club,
+      category: event.category,
+      date: event.date,
+      time: event.time,
+      venue: event.venue,
+      maxParticipants: String(event.maxParticipants),
+      image: event.image,
+    });
+  };
+
+  const handleDeleteEvent = (event: Event) => {
+    const isConfirmed = window.confirm(`Are you sure you want to cancel ${event.title}?`);
+    if (!isConfirmed) {
+      return;
+    }
+
+    deleteEvent(event.id);
+
+    if (editingEventId === event.id) {
+      resetEventForm();
+    }
+
+    toast({
+      title: "Event Deleted",
+      description: `${event.title} has been removed.`,
     });
   };
 
@@ -189,9 +365,11 @@ const AdminDashboard = () => {
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Plus className="w-5 h-5" />
-                  Create New Club
+                  {editingClubId !== null ? "Edit Club" : "Create New Club"}
                 </CardTitle>
-                <CardDescription>Add a new club to the system</CardDescription>
+                <CardDescription>
+                  {editingClubId !== null ? "Update selected club details" : "Add a new club to the system"}
+                </CardDescription>
               </CardHeader>
               <CardContent>
                 <form onSubmit={handleCreateClub} className="space-y-4">
@@ -256,7 +434,16 @@ const AdminDashboard = () => {
                       placeholder="https://example.com/image.jpg"
                     />
                   </div>
-                  <Button type="submit" className="w-full">Create Club</Button>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <Button type="submit" className="w-full">
+                      {editingClubId !== null ? "Update Club" : "Create Club"}
+                    </Button>
+                    {editingClubId !== null && (
+                      <Button type="button" variant="outline" className="w-full" onClick={resetClubForm}>
+                        Cancel Edit
+                      </Button>
+                    )}
+                  </div>
                 </form>
               </CardContent>
             </Card>
@@ -268,15 +455,19 @@ const AdminDashboard = () => {
               </CardHeader>
               <CardContent>
                 <div className="space-y-3">
-                  {clubs.slice(0, 5).map((club) => (
+                  {[...clubs].slice(-5).reverse().map((club) => (
                     <div key={club.id} className="flex items-center justify-between p-3 border rounded-lg hover:bg-secondary/50 transition-colors">
                       <div>
                         <p className="font-medium">{club.name}</p>
                         <p className="text-sm text-muted-foreground">{club.members} members</p>
                       </div>
                       <div className="flex gap-2">
-                        <Button size="sm" variant="outline">Edit</Button>
-                        <Button size="sm" variant="outline">Delete</Button>
+                        <Button size="sm" variant="outline" type="button" onClick={() => handleEditClub(club)}>
+                          Edit
+                        </Button>
+                        <Button size="sm" variant="outline" type="button" onClick={() => handleDeleteClub(club)}>
+                          Delete
+                        </Button>
                       </div>
                     </div>
                   ))}
@@ -291,9 +482,11 @@ const AdminDashboard = () => {
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Plus className="w-5 h-5" />
-                  Create New Event
+                  {editingEventId !== null ? "Edit Event" : "Create New Event"}
                 </CardTitle>
-                <CardDescription>Schedule a new event</CardDescription>
+                <CardDescription>
+                  {editingEventId !== null ? "Update selected event details" : "Schedule a new event"}
+                </CardDescription>
               </CardHeader>
               <CardContent>
                 <form onSubmit={handleCreateEvent} className="space-y-4">
@@ -413,7 +606,16 @@ const AdminDashboard = () => {
                       placeholder="https://example.com/image.jpg"
                     />
                   </div>
-                  <Button type="submit" className="w-full">Create Event</Button>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <Button type="submit" className="w-full">
+                      {editingEventId !== null ? "Update Event" : "Create Event"}
+                    </Button>
+                    {editingEventId !== null && (
+                      <Button type="button" variant="outline" className="w-full" onClick={resetEventForm}>
+                        Cancel Edit
+                      </Button>
+                    )}
+                  </div>
                 </form>
               </CardContent>
             </Card>
@@ -425,7 +627,7 @@ const AdminDashboard = () => {
               </CardHeader>
               <CardContent>
                 <div className="space-y-3">
-                  {events.slice(0, 5).map((event) => (
+                  {[...events].slice(-5).reverse().map((event) => (
                     <div key={event.id} className="flex items-center justify-between p-3 border rounded-lg hover:bg-secondary/50 transition-colors">
                       <div>
                         <p className="font-medium">{event.title}</p>
@@ -434,8 +636,12 @@ const AdminDashboard = () => {
                         </p>
                       </div>
                       <div className="flex gap-2">
-                        <Button size="sm" variant="outline">Edit</Button>
-                        <Button size="sm" variant="outline">Cancel</Button>
+                        <Button size="sm" variant="outline" type="button" onClick={() => handleEditEvent(event)}>
+                          Edit
+                        </Button>
+                        <Button size="sm" variant="outline" type="button" onClick={() => handleDeleteEvent(event)}>
+                          Cancel
+                        </Button>
                       </div>
                     </div>
                   ))}
