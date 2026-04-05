@@ -1,4 +1,4 @@
-import { Calendar, Clock, MapPin, Users } from "lucide-react";
+import { Calendar, Clock, MapPin, Users, ArrowRight } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "./ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "./ui/card";
@@ -14,60 +14,74 @@ const EventCard = ({ event }: EventCardProps) => {
   const navigate = useNavigate();
   const registrationProgress = (event.currentParticipants / event.maxParticipants) * 100;
   const spotsLeft = event.maxParticipants - event.currentParticipants;
+  const isEventFull = spotsLeft === 0;
 
   return (
-    <Card className="overflow-hidden group hover:shadow-lg transition-all duration-300">
-      <div className="relative overflow-hidden h-48">
+    <Card className="overflow-hidden group hover-lift h-full flex flex-col">
+      <div className="relative overflow-hidden h-52 bg-gradient-to-br from-accent/20 to-primary/20">
         <img
           src={event.image}
           alt={event.title}
-          className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+          className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
         />
-        <div className="absolute top-3 right-3 flex gap-2">
-          <Badge className="bg-accent text-accent-foreground">{event.category}</Badge>
-          {event.registrationOpen && (
-            <Badge className="bg-primary text-primary-foreground">Open</Badge>
+        <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+        <div className="absolute top-4 right-4 flex gap-2 z-10">
+          <Badge className="bg-accent text-accent-foreground font-semibold shadow-lg">{event.category}</Badge>
+          {event.registrationOpen && !isEventFull && (
+            <Badge className="bg-primary text-primary-foreground font-semibold shadow-lg animate-pulse">Open</Badge>
+          )}
+          {isEventFull && (
+            <Badge className="bg-red-600 text-white font-semibold shadow-lg">Full</Badge>
           )}
         </div>
       </div>
       
-      <CardHeader>
-        <CardTitle className="text-xl">{event.title}</CardTitle>
-        <CardDescription className="text-sm text-primary font-medium">
+      <CardHeader className="pb-3">
+        <CardTitle className="text-xl md:text-2xl group-hover:text-primary transition-colors line-clamp-2">{event.title}</CardTitle>
+        <CardDescription className="text-sm text-accent font-semibold">
           {event.club}
         </CardDescription>
       </CardHeader>
       
-      <CardContent className="space-y-4">
-        <p className="text-sm text-muted-foreground">{event.description}</p>
+      <CardContent className="space-y-4 flex-grow">
+        <p className="text-sm text-muted-foreground line-clamp-2">{event.description}</p>
         
-        <div className="space-y-2">
-          <div className="flex items-center gap-2 text-sm">
-            <Calendar className="w-4 h-4 text-primary" />
-            <span>{new Date(event.date).toLocaleDateString('en-US', { 
-              month: 'long', 
-              day: 'numeric', 
-              year: 'numeric' 
+        <div className="space-y-3">
+          <div className="flex items-center gap-3 text-sm bg-secondary/30 rounded-lg p-3">
+            <div className="inline-flex items-center justify-center w-8 h-8 bg-primary/20 rounded-full flex-shrink-0">
+              <Calendar className="w-4 h-4 text-primary" />
+            </div>
+            <span className="text-foreground font-medium">{new Date(event.date).toLocaleDateString('en-US', { 
+              month: 'short', 
+              day: 'numeric'
             })}</span>
           </div>
-          <div className="flex items-center gap-2 text-sm">
-            <Clock className="w-4 h-4 text-primary" />
-            <span>{event.time}</span>
+          
+          <div className="flex items-center gap-3 text-sm bg-secondary/30 rounded-lg p-3">
+            <div className="inline-flex items-center justify-center w-8 h-8 bg-primary/20 rounded-full flex-shrink-0">
+              <Clock className="w-4 h-4 text-primary" />
+            </div>
+            <span className="text-foreground font-medium">{event.time}</span>
           </div>
-          <div className="flex items-center gap-2 text-sm">
-            <MapPin className="w-4 h-4 text-primary" />
-            <span>{event.venue}</span>
+          
+          <div className="flex items-center gap-3 text-sm bg-secondary/30 rounded-lg p-3">
+            <div className="inline-flex items-center justify-center w-8 h-8 bg-primary/20 rounded-full flex-shrink-0">
+              <MapPin className="w-4 h-4 text-primary" />
+            </div>
+            <span className="text-foreground font-medium truncate">{event.venue}</span>
           </div>
         </div>
 
         {event.registrationOpen && (
-          <div className="space-y-2">
+          <div className="space-y-3 border-t border-border pt-4">
             <div className="flex items-center justify-between text-sm">
-              <span className="flex items-center gap-1">
-                <Users className="w-4 h-4" />
+              <span className="flex items-center gap-1 font-medium text-foreground">
+                <Users className="w-4 h-4 text-accent" />
                 {event.currentParticipants}/{event.maxParticipants}
               </span>
-              <span className="text-muted-foreground">{spotsLeft} spots left</span>
+              <span className={`text-sm font-semibold ${isEventFull ? 'text-red-600' : 'text-green-600'}`}>
+                {isEventFull ? 'Event Full' : `${spotsLeft} spots`}
+              </span>
             </div>
             <Progress value={registrationProgress} className="h-2" />
           </div>
@@ -78,13 +92,15 @@ const EventCard = ({ event }: EventCardProps) => {
         {event.registrationOpen ? (
           <Button 
             onClick={() => navigate(`/events/${event.id}/register`)}
-            className="w-full"
-            disabled={spotsLeft === 0}
+            className="w-full group/btn font-semibold"
+            disabled={isEventFull}
+            variant={isEventFull ? "secondary" : "default"}
           >
-            {spotsLeft === 0 ? "Event Full" : "Register Now"}
+            {isEventFull ? "Event Full" : "Register Now"}
+            {!isEventFull && <ArrowRight className="ml-2 w-4 h-4 group-hover/btn:translate-x-1 transition-transform" />}
           </Button>
         ) : (
-          <Button variant="secondary" disabled className="w-full">
+          <Button variant="secondary" disabled className="w-full font-semibold">
             Registration Closed
           </Button>
         )}

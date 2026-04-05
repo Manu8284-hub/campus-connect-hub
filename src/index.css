@@ -114,3 +114,73 @@ All colors MUST be HSL.
     @apply bg-background text-foreground;
   }
 }
+
+/* Glassmorphism and smooth animations */
+@layer components {
+  .glass {
+    @apply bg-white/50 backdrop-blur-md border border-white/20 shadow-lg;
+  }
+
+  .glass-dark {
+    @apply bg-slate-900/50 backdrop-blur-md border border-white/10 shadow-lg;
+  }
+
+  .smooth-in {
+    animation: smoothIn 0.6s ease-out forwards;
+  }
+
+  .smooth-in-delay-1 {
+    animation: smoothIn 0.6s ease-out forwards;
+    animation-delay: 0.1s;
+    opacity: 0;
+  }
+
+  .smooth-in-delay-2 {
+    animation: smoothIn 0.6s ease-out forwards;
+    animation-delay: 0.2s;
+    opacity: 0;
+  }
+
+  .smooth-in-delay-3 {
+    animation: smoothIn 0.6s ease-out forwards;
+    animation-delay: 0.3s;
+    opacity: 0;
+  }
+
+  .card-glass {
+    @apply bg-white/80 dark:bg-slate-800/80 backdrop-blur-md border border-white/20 dark:border-white/10 shadow-xl;
+  }
+
+  .transition-smooth {
+    @apply transition-all duration-300 ease-out;
+  }
+}
+
+@keyframes smoothIn {
+  from {
+    opacity: 0;
+    transform: translateY(15px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+@keyframes glow {
+  0%, 100% {
+    box-shadow: 0 0 5px rgba(59, 130, 246, 0.3);
+  }
+  50% {
+    box-shadow: 0 0 20px rgba(59, 130, 246, 0.6);
+  }
+}
