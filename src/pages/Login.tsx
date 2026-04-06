@@ -45,7 +45,7 @@ const Login = () => {
   const from = (location.state as { from?: { pathname?: string } } | undefined)?.from?.pathname || "/admin";
   const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID as string | undefined;
 
-  const handleDemoLogin = async (event: FormEvent<HTMLFormElement>) => {
+  const handleCredentialLogin = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
     try {
@@ -53,8 +53,8 @@ const Login = () => {
 
       if (!isValid) {
         toast({
-          title: "Invalid demo credentials",
-          description: "Use admin@campusconnect.demo and admin123.",
+          title: "Invalid credentials",
+          description: "Check your email and password and try again.",
           variant: "destructive",
         });
         return;
@@ -62,7 +62,7 @@ const Login = () => {
 
       toast({
         title: "Login successful",
-        description: "Signed in with demo credentials.",
+        description: "Signed in successfully.",
       });
       navigate(from, { replace: true });
     } catch (error) {
@@ -159,7 +159,7 @@ const Login = () => {
             <CardDescription>
               {isAuthenticated
                 ? "You are already authenticated."
-                : "Continue with Google to access the admin dashboard."}
+                : "Use your account credentials or continue with Google to access the admin dashboard."}
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -179,7 +179,7 @@ const Login = () => {
               </div>
             ) : (
               <div className="space-y-5">
-                <form onSubmit={handleDemoLogin} className="space-y-3">
+                <form onSubmit={handleCredentialLogin} className="space-y-3">
                   <div className="space-y-2">
                     <Label htmlFor="email">Email</Label>
                     <Input
@@ -187,7 +187,7 @@ const Login = () => {
                       type="email"
                       value={email}
                       onChange={(event) => setEmail(event.target.value)}
-                      placeholder="admin@campusconnect.demo"
+                      placeholder="you@college.edu"
                       required
                     />
                   </div>
@@ -198,15 +198,15 @@ const Login = () => {
                       type="password"
                       value={password}
                       onChange={(event) => setPassword(event.target.value)}
-                      placeholder="admin123"
+                      placeholder="Enter your password"
                       required
                     />
                   </div>
-                  <Button type="submit" className="w-full">Login with Demo Credentials</Button>
+                  <Button type="submit" className="w-full">Login</Button>
                 </form>
 
                 <p className="text-xs text-muted-foreground text-center">
-                  Demo credentials: <span className="font-medium">admin@campusconnect.demo</span> / <span className="font-medium">admin123</span>
+                  New here? <Link to="/create-account" className="font-medium underline underline-offset-4">Create an account</Link>
                 </p>
 
                 <div className="flex justify-center">

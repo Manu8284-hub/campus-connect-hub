@@ -86,15 +86,68 @@
       "featured": false
     }
   ],
+  "users": [
+    {
+      "id": 1,
+      "name": "manu",
+      "email": "manu@gmail.com",
+      "password": "123456",
+      "provider": "credentials",
+      "createdAt": "2026-04-06T06:03:39.107Z"
+    },
+    {
+      "id": 2,
+      "name": "jatin",
+      "email": "jatin@gmail.com",
+      "password": "456789",
+      "provider": "credentials",
+      "createdAt": "2026-04-06T06:06:13.064Z"
+    },
+    {
+      "id": 3,
+      "name": "manu",
+      "email": "manu@chitkara.edu.in",
+      "password": "123456789",
+      "provider": "credentials",
+      "createdAt": "2026-04-06T06:12:05.856Z"
+    }
+  ],
   "loginHistory": [
+    {
+      "id": 4,
+      "user": {
+        "name": "manu",
+        "email": "manu@gmail.com"
+      },
+      "provider": "credentials",
+      "at": "2026-04-06T06:12:35.040Z"
+    },
+    {
+      "id": 3,
+      "user": {
+        "name": "manu",
+        "email": "manu@chitkara.edu.in"
+      },
+      "provider": "credentials",
+      "at": "2026-04-06T06:12:05.873Z"
+    },
+    {
+      "id": 2,
+      "user": {
+        "name": "jatin",
+        "email": "jatin@gmail.com"
+      },
+      "provider": "credentials",
+      "at": "2026-04-06T06:06:13.083Z"
+    },
     {
       "id": 1,
       "user": {
-        "name": "Demo Admin",
-        "email": "admin@campusconnect.demo"
+        "name": "manu",
+        "email": "manu@gmail.com"
       },
       "provider": "credentials",
-      "at": "2026-03-07T16:49:56.002Z"
+      "at": "2026-04-06T06:03:39.124Z"
     }
   ]
 }

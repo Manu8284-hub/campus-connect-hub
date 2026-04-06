@@ -15,6 +15,7 @@ const Navbar = () => {
     { path: "/events", label: "Events" },
     { path: "https://www.chitkara.edu.in/", label: "About", external: true },
     { path: "/admin", label: "Admin" },
+    ...(isAuthenticated ? [] : [{ path: "/create-account", label: "Create Account" }]),
     { path: isAuthenticated ? "/logout" : "/login", label: isAuthenticated ? "Logout" : "Login" },
   ];
 

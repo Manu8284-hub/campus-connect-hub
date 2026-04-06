@@ -255,6 +255,7 @@ Application routes:
 - `/clubs/:id/join` -> Club join form
 - `/events` -> Events listing + filters
 - `/events/:id/register` -> Event registration form
+- `/create-account` -> Create account page
 - `/login` -> Admin login
 - `/logout` -> Logout page
 - `/admin` -> Admin dashboard (protected)
@@ -278,6 +279,22 @@ Returns backend status and available routes.
 
 ### Auth
 
+#### `POST /auth/register`
+
+Creates a credentials-based account.
+
+Request example:
+
+```json
+{
+	"name": "Student User",
+	"email": "student@college.edu",
+	"password": "strongpass"
+}
+```
+
+Returns created user details and stores the account in backend JSON database.
+
 #### `POST /auth/login`
 
 Supports two login modes:
@@ -289,8 +306,8 @@ Credentials request example:
 
 ```json
 {
-	"email": "admin@campusconnect.demo",
-	"password": "admin123",
+	"email": "student@college.edu",
+	"password": "strongpass",
 	"provider": "credentials"
 }
 ```
@@ -380,11 +397,11 @@ Checks:
 2. Ensure `VITE_API_BASE_URL` points to backend.
 3. Restart frontend after changing `.env`.
 
-### Login fails with demo credentials
+### Login fails
 
 Checks:
 
-1. Use exact email/password values listed above.
+1. Ensure the account exists (create one from `/create-account` if needed).
 2. Confirm backend server is running.
 3. Confirm request is sent to correct API base URL.
 

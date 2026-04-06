@@ -10,8 +10,10 @@ interface AuthUser {
 interface AuthContextType {
   isAuthenticated: boolean;
   user: AuthUser | null;
+  isAdmin: boolean;
   loginWithGoogle: (credential: string) => Promise<boolean>;
   loginWithCredentials: (email: string, password: string) => Promise<boolean>;
+  registerWithCredentials: (name: string, email: string, password: string) => Promise<boolean>;
   logout: () => void;
 }
 
@@ -60,6 +62,7 @@ const getInitialUser = (): AuthUser | null => {
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(getInitialAuthState);
   const [user, setUser] = useState<AuthUser | null>(getInitialUser);
+  const isAdmin = Boolean(user?.email?.toLowerCase().endsWith("@chitkara.edu.in"));
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -114,13 +117,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const loginWithCredentials = async (email: string, password: string) => {
+    const normalizedEmail = email.trim().toLowerCase();
+
     const response = await fetch(apiUrl("/auth/login"), {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        email: email.trim().toLowerCase(),
+        email: normalizedEmail,
         password: password.trim(),
         provider: "credentials",
       }),
@@ -132,11 +137,28 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
     const payload = (await response.json()) as { user?: AuthUser };
 
-    setUser(payload.user || {
-      name: "Demo Admin",
-      email: email.trim().toLowerCase(),
-    });
+    setUser(payload.user || { name: "Campus User", email: normalizedEmail });
     setIsAuthenticated(true);
+    return true;
+  };
+
+  const registerWithCredentials = async (name: string, email: string, password: string) => {
+    const response = await fetch(apiUrl("/auth/register"), {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        name: name.trim(),
+        email: email.trim().toLowerCase(),
+        password: password.trim(),
+      }),
+    });
+
+    if (!response.ok) {
+      throw new Error(await parseApiError(response));
+    }
+
     return true;
   };
 
@@ -146,7 +168,17 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ isAuthenticated, user, loginWithGoogle, loginWithCredentials, logout }}>
+    <AuthContext.Provider
+      value={{
+        isAuthenticated,
+        user,
+        isAdmin,
+        loginWithGoogle,
+        loginWithCredentials,
+        registerWithCredentials,
+        logout,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );

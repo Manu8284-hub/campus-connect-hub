@@ -12,6 +12,7 @@ import JoinClub from "./pages/JoinClub";
 import EventRegistration from "./pages/EventRegistration";
 import AdminDashboard from "./pages/AdminDashboard";
 import Login from "./pages/Login";
+import CreateAccount from "./pages/CreateAccount";
 import Logout from "./pages/Logout";
 import NotFound from "./pages/NotFound";
 import ProtectedRoute from "./components/ProtectedRoute";
@@ -33,6 +34,7 @@ const App = () => (
               <Route path="/events" element={<Events />} />
               <Route path="/events/:id/register" element={<EventRegistration />} />
               <Route path="/login" element={<Login />} />
+              <Route path="/create-account" element={<CreateAccount />} />
               <Route path="/logout" element={<Logout />} />
               <Route
                 path="/admin"

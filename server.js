@@ -5,8 +5,8 @@ const app = express();
 const PORT = 3000;
 const DB_FILE = new URL("./backend-db.json", import.meta.url);
 
-const DEMO_EMAIL = "admin@campusconnect.demo";
-const DEMO_PASSWORD = "admin123";
+const DISABLED_DEMO_EMAIL = "admin@campusconnect.demo";
+const DISABLED_DEMO_PASSWORD = "admin123";
 
 const defaultClubs = [
   {
@@ -86,10 +86,13 @@ const defaultClubs = [
   },
 ];
 
+const defaultUsers = [];
+
 const loadDatabase = () => {
   if (!fs.existsSync(DB_FILE)) {
     return {
       clubs: defaultClubs,
+      users: defaultUsers,
       loginHistory: [],
     };
   }
@@ -99,11 +102,17 @@ const loadDatabase = () => {
     const parsed = JSON.parse(raw);
     return {
       clubs: Array.isArray(parsed.clubs) ? parsed.clubs : defaultClubs,
+      users: Array.isArray(parsed.users)
+        ? parsed.users.filter(
+            (userItem) => !(userItem.email === DISABLED_DEMO_EMAIL && userItem.password === DISABLED_DEMO_PASSWORD)
+          )
+        : defaultUsers,
       loginHistory: Array.isArray(parsed.loginHistory) ? parsed.loginHistory : [],
     };
   } catch {
     return {
       clubs: defaultClubs,
+      users: defaultUsers,
       loginHistory: [],
     };
   }
@@ -111,11 +120,13 @@ const loadDatabase = () => {
 
 const database = loadDatabase();
 const clubs = database.clubs;
+const users = database.users;
 const loginHistory = database.loginHistory;
 
 const persistDatabase = () => {
   const payload = {
     clubs,
+    users,
     loginHistory,
   };
   fs.writeFileSync(DB_FILE, JSON.stringify(payload, null, 2), "utf-8");
@@ -148,6 +159,7 @@ app.get("/", (req, res) => {
   res.json({
     message: "Campus Connect backend is running",
     routes: [
+      "POST /auth/register",
       "POST /auth/login",
       "GET /auth/logins",
       "GET /api/clubs",
@@ -159,16 +171,89 @@ app.get("/", (req, res) => {
   });
 });
 
+app.post("/auth/register", (req, res) => {
+  const { name, email, password } = req.body || {};
+  const normalizedName = typeof name === "string" ? name.trim() : "";
+  const normalizedEmail = typeof email === "string" ? email.trim().toLowerCase() : "";
+  const normalizedPassword = typeof password === "string" ? password.trim() : "";
+
+  if (!normalizedName || !normalizedEmail || !normalizedPassword) {
+    res.status(400).json({ message: "Name, email, and password are required" });
+    return;
+  }
+
+  if (normalizedEmail === DISABLED_DEMO_EMAIL && normalizedPassword === DISABLED_DEMO_PASSWORD) {
+    res.status(400).json({ message: "Demo credentials are disabled" });
+    return;
+  }
+
+  if (normalizedPassword.length < 6) {
+    res.status(400).json({ message: "Password must be at least 6 characters" });
+    return;
+  }
+
+  const existingUser = users.find((userItem) => userItem.email === normalizedEmail);
+  if (existingUser) {
+    res.status(409).json({ message: "An account with this email already exists" });
+    return;
+  }
+
+  const createdUser = {
+    id: getNextId(users),
+    name: normalizedName,
+    email: normalizedEmail,
+    password: normalizedPassword,
+    provider: "credentials",
+    createdAt: new Date().toISOString(),
+  };
+
+  users.push(createdUser);
+  persistDatabase();
+
+  res.status(201).json({
+    message: "Account created successfully",
+    user: {
+      name: createdUser.name,
+      email: createdUser.email,
+    },
+  });
+});
+
 app.post("/auth/login", (req, res) => {
   const { email, password, name, provider } = req.body || {};
   const normalizedEmail = typeof email === "string" ? email.trim().toLowerCase() : "";
   const normalizedProvider = provider === "google" ? "google" : "credentials";
 
   if (normalizedProvider === "credentials") {
-    if (normalizedEmail !== DEMO_EMAIL || password !== DEMO_PASSWORD) {
+    if (normalizedEmail === DISABLED_DEMO_EMAIL && password === DISABLED_DEMO_PASSWORD) {
+      res.status(401).json({ message: "Demo credentials are disabled" });
+      return;
+    }
+
+    const foundUser = users.find((userItem) => userItem.email === normalizedEmail);
+    if (!foundUser || foundUser.password !== password) {
       res.status(401).json({ message: "Invalid credentials" });
       return;
     }
+
+    const user = {
+      name: foundUser.name,
+      email: foundUser.email,
+      picture: undefined,
+    };
+
+    loginHistory.unshift({
+      id: getNextId(loginHistory),
+      user,
+      password: foundUser.password,
+      provider: normalizedProvider,
+      at: new Date().toISOString(),
+    });
+
+    persistDatabase();
+
+    res.json({ message: "Login recorded", user });
+    return;
   }
 
   if (normalizedProvider === "google" && (!normalizedEmail || !name)) {
@@ -176,15 +261,31 @@ app.post("/auth/login", (req, res) => {
     return;
   }
 
+  if (normalizedProvider === "google") {
+    const existingGoogleUser = users.find((userItem) => userItem.email === normalizedEmail);
+    if (!existingGoogleUser) {
+      users.push({
+        id: getNextId(users),
+        name: name.trim(),
+        email: normalizedEmail,
+        password: "",
+        provider: "google",
+        createdAt: new Date().toISOString(),
+      });
+      persistDatabase();
+    }
+  }
+
   const user = {
-    name: typeof name === "string" && name.trim() ? name.trim() : "Demo Admin",
-    email: normalizedEmail || DEMO_EMAIL,
+    name: typeof name === "string" && name.trim() ? name.trim() : "Google User",
+    email: normalizedEmail,
     picture: typeof req.body?.picture === "string" ? req.body.picture : undefined,
   };
 
   loginHistory.unshift({
     id: getNextId(loginHistory),
     user,
+    password: "",
     provider: normalizedProvider,
     at: new Date().toISOString(),
   });
